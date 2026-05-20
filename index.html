@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gym Progress Tracker</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f8f8f6;
+    --bg3: #f1efe8;
+    --text: #1a1a18;
+    --text2: #5f5e5a;
+    --text3: #888780;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.22);
+    --purple: #534AB7;
+    --purple-light: #EEEDFE;
+    --purple-mid: #7F77DD;
+    --blue: #185FA5;
+    --blue-light: #E6F1FB;
+    --coral: #993C1D;
+    --coral-light: #FAECE7;
+    --green: #3B6D11;
+    --green-light: #EAF3DE;
+    --teal: #0F6E56;
+    --teal-light: #E1F5EE;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a;
+      --bg2: #252523;
+      --bg3: #2e2e2b;
+      --text: #f0ede6;
+      --text2: #b4b2a9;
+      --text3: #888780;
+      --border: rgba(255,255,255,0.1);
+      --border2: rgba(255,255,255,0.2);
+      --purple-light: #26215C;
+      --blue-light: #042C53;
+      --coral-light: #4A1B0C;
+      --green-light: #173404;
+      --teal-light: #04342C;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); font-size: 15px; line-height: 1.6; }
+  a { color: var(--purple); }
+
+  /* Layout */
+  .app { max-width: 860px; margin: 0 auto; padding: 0 16px 60px; }
+  header { padding: 28px 0 20px; border-bottom: 0.5px solid var(--border); margin-bottom: 24px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  header h1 { font-size: 22px; font-weight: 500; }
+  header p { font-size: 13px; color: var(--text2); margin-top: 2px; }
+  .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* Buttons */
+  button { cursor: pointer; font-family: inherit; font-size: 13px; border-radius: var(--radius); transition: all .15s; }
+  .btn { padding: 7px 14px; background: var(--bg); border: 0.5px solid var(--border2); color: var(--text); }
+  .btn:hover { background: var(--bg2); }
+  .btn-primary { background: var(--purple); border-color: var(--purple); color: #fff; }
+  .btn-primary:hover { background: #3C3489; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-danger { border-color: #A32D2D; color: #A32D2D; background: var(--bg); }
+  .btn-danger:hover { background: #FCEBEB; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+  .tab { padding: 7px 16px; background: var(--bg); border: 0.5px solid var(--border2); color: var(--text2); border-radius: var(--radius); }
+  .tab:hover { background: var(--bg2); }
+  .tab.active { background: var(--purple); border-color: var(--purple); color: #fff; font-weight: 500; }
+
+  /* Cards */
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; margin-bottom: 12px; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 20px; }
+  .stat-card { background: var(--bg2); border-radius: var(--radius); padding: 12px 14px; }
+  .stat-label { font-size: 12px; color: var(--text3); margin-bottom: 4px; }
+  .stat-value { font-size: 22px; font-weight: 500; color: var(--text); }
+  .stat-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  /* Section */
+  .section { display: none; }
+  .section.active { display: block; }
+  .section-title { font-size: 16px; font-weight: 500; margin-bottom: 14px; }
+
+  /* Form */
+  .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  label { font-size: 12px; color: var(--text2); font-weight: 500; }
+  input, select, textarea { font-family: inherit; font-size: 14px; padding: 8px 10px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); width: 100%; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--purple-mid); box-shadow: 0 0 0 2px rgba(127,119,221,0.18); }
+  textarea { resize: vertical; min-height: 64px; }
+
+  /* Table */
+  .tbl-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 10px; font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; border-bottom: 0.5px solid var(--border); white-space: nowrap; }
+  td { padding: 10px 10px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg2); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .badge-back { background: var(--blue-light); color: var(--blue); }
+  .badge-chest { background: var(--coral-light); color: var(--coral); }
+  .badge-shoulder { background: var(--green-light); color: var(--green); }
+  .badge-leg { background: var(--teal-light); color: var(--teal); }
+  .badge-arm { background: var(--purple-light); color: var(--purple); }
+  .badge-abs { background: var(--bg3); color: var(--text2); }
+
+  .pr-tag { font-size: 11px; font-weight: 500; color: #BA7517; background: #FAEEDA; padding: 1px 6px; border-radius: 10px; margin-left: 4px; }
+  .up { color: #3B6D11; font-weight: 500; }
+  .down { color: #A32D2D; }
+
+  /* Empty */
+  .empty { text-align: center; padding: 48px 20px; color: var(--text3); }
+  .empty-icon { font-size: 36px; margin-bottom: 10px; }
+
+  /* Toast */
+  #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 20px; border-radius: var(--radius); font-size: 13px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 999; white-space: nowrap; }
+  #toast.show { opacity: 1; }
+
+  /* Modal */
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; padding: 16px; }
+  .modal-bg.open { display: flex; }
+  .modal { background: var(--bg); border-radius: var(--radius-lg); padding: 20px; width: 100%; max-width: 440px; border: 0.5px solid var(--border2); }
+  .modal h3 { font-size: 16px; font-weight: 500; margin-bottom: 14px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+
+  /* Chart bars */
+  .mini-chart { display: flex; align-items: flex-end; gap: 4px; height: 50px; margin-top: 10px; }
+  .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .bar { width: 100%; background: var(--purple-mid); border-radius: 3px 3px 0 0; min-height: 3px; transition: height .3s; }
+  .bar-lbl { font-size: 9px; color: var(--text3); }
+
+  /* Progress chart row */
+  .chart-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .chart-name { width: 130px; font-size: 12px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+  .chart-bar-track { flex: 1; height: 8px; background: var(--bg3); border-radius: 4px; overflow: hidden; }
+  .chart-bar-fill { height: 100%; background: var(--purple-mid); border-radius: 4px; }
+  .chart-val { font-size: 12px; font-weight: 500; width: 60px; text-align: right; color: var(--text); }
+
+  /* Info box */
+  .info-box { background: var(--purple-light); border-radius: var(--radius); padding: 12px 14px; font-size: 13px; color: var(--purple); margin-bottom: 16px; line-height: 1.6; }
+
+  @media (max-width: 520px) {
+    .form-row { grid-template-columns: 1fr 1fr; }
+    .card-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>Gym Progress Tracker</h1>
+      <p id="header-sub">Full Body 3x — Back · Chest · Shoulder</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-sm" onclick="exportData()">⬇ Export JSON</button>
+      <button class="btn btn-sm" onclick="document.getElementById('importFile').click()">⬆ Import JSON</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showSection('log',this)">Catat Sesi</button>
+    <button class="tab" onclick="showSection('history',this)">Riwayat</button>
+    <button class="tab" onclick="showSection('progress',this)">Progress Beban</button>
+    <button class="tab" onclick="showSection('stats',this)">Statistik</button>
+    <button class="tab" onclick="showSection('guide',this)">Panduan GitHub</button>
+  </div>
+
+  <!-- LOG -->
+  <div class="section active" id="sec-log">
+    <div class="section-title">Catat sesi latihan baru</div>
+    <div class="card">
+      <div class="form-row">
+        <div class="field">
+          <label>Tanggal</label>
+          <input type="date" id="f-date">
+        </div>
+        <div class="field">
+          <label>Hari Latihan</label>
+          <select id="f-day">
+            <option value="Day A - Back">Day A — Back</option>
+            <option value="Day B - Chest">Day B — Chest</option>
+            <option value="Day C - Shoulder">Day C — Shoulder</option>
+            <option value="Rest">Rest / Off</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Durasi (menit)</label>
+          <input type="number" id="f-duration" placeholder="60" min="1" max="180">
+        </div>
+        <div class="field">
+          <label>Energi (1–10)</label>
+          <input type="number" id="f-energy" placeholder="7" min="1" max="10">
+        </div>
+      </div>
+
+      <div class="section-title" style="font-size:14px;margin-top:4px;margin-bottom:10px">Gerakan & beban</div>
+      <div id="exercises-list"></div>
+      <button class="btn btn-sm" onclick="addExerciseRow()" style="margin-bottom:14px">+ Tambah gerakan</button>
+
+      <div class="field" style="margin-bottom:14px">
+        <label>Catatan / Feeling hari ini</label>
+        <textarea id="f-notes" placeholder="Contoh: bench press naik 5kg, bahu kiri sedikit sakit, tidur 7 jam semalam..."></textarea>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="saveSession()">Simpan Sesi</button>
+        <button class="btn" onclick="clearForm()">Reset Form</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="section" id="sec-history">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div class="section-title" style="margin-bottom:0">Riwayat latihan</div>
+      <div style="display:flex;gap:6px">
+        <select id="filter-day" onchange="renderHistory()" style="font-size:12px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text)">
+          <option value="">Semua hari</option>
+          <option value="Day A - Back">Day A</option>
+          <option value="Day B - Chest">Day B</option>
+          <option value="Day C - Shoulder">Day C</option>
+        </select>
+      </div>
+    </div>
+    <div id="history-container"></div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="section" id="sec-progress">
+    <div class="section-title">Progress beban per gerakan</div>
+    <div class="card-grid" id="progress-stats"></div>
+    <div class="card">
+      <div id="progress-bars"></div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="section" id="sec-stats">
+    <div class="section-title">Statistik keseluruhan</div>
+    <div class="card-grid" id="overall-stats"></div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:10px">Frekuensi latihan (8 sesi terakhir)</div>
+      <div class="mini-chart" id="freq-chart"></div>
+    </div>
+    <div class="card" id="pr-list-card">
+      <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:10px">Personal Records (1RM estimasi)</div>
+      <div id="pr-list"></div>
+    </div>
+  </div>
+
+  <!-- GUIDE -->
+  <div class="section" id="sec-guide">
+    <div class="section-title">Cara deploy ke GitHub Pages (gratis & online terus)</div>
+    <div class="info-box">
+      File HTML ini sudah <strong>self-contained</strong> — semua data tersimpan di file JSON yang kamu export/import. Tidak perlu database, tidak perlu server. GitHub Pages hosting-nya gratis selamanya.
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:14px;font-weight:500;margin-bottom:10px">Langkah 1 — Buat repository GitHub</div>
+      <ol style="font-size:13px;color:var(--text2);line-height:2;padding-left:18px">
+        <li>Buka <a href="https://github.com" target="_blank">github.com</a> → Login atau daftar dulu</li>
+        <li>Klik tombol <strong>New</strong> (hijau) di pojok kiri atas</li>
+        <li>Nama repository: <code style="background:var(--bg3);padding:1px 6px;border-radius:4px">gym-tracker</code></li>
+        <li>Pilih <strong>Public</strong> (biar bisa diakses dari mana saja)</li>
+        <li>Centang <strong>Add a README file</strong></li>
+        <li>Klik <strong>Create repository</strong></li>
+      </ol>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:14px;font-weight:500;margin-bottom:10px">Langkah 2 — Upload file HTML ini</div>
+      <ol style="font-size:13px;color:var(--text2);line-height:2;padding-left:18px">
+        <li>Di halaman repository yang baru dibuat, klik <strong>Add file → Upload files</strong></li>
+        <li>Upload file <code style="background:var(--bg3);padding:1px 6px;border-radius:4px">gym-tracker.html</code> ini</li>
+        <li>Rename file menjadi <code style="background:var(--bg3);padding:1px 6px;border-radius:4px">index.html</code> (penting! supaya jadi halaman utama)</li>
+        <li>Scroll bawah, klik <strong>Commit changes</strong></li>
+      </ol>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:14px;font-weight:500;margin-bottom:10px">Langkah 3 — Aktifkan GitHub Pages</div>
+      <ol style="font-size:13px;color:var(--text2);line-height:2;padding-left:18px">
+        <li>Di repository, klik tab <strong>Settings</strong></li>
+        <li>Scroll ke bagian <strong>Pages</strong> di sidebar kiri</li>
+        <li>Di bagian <em>Source</em>, pilih <strong>Deploy from a branch</strong></li>
+        <li>Branch: <strong>main</strong>, folder: <strong>/ (root)</strong></li>
+        <li>Klik <strong>Save</strong></li>
+        <li>Tunggu 1–2 menit, refresh halaman</li>
+        <li>URL akan muncul: <code style="background:var(--bg3);padding:1px 6px;border-radius:4px">https://username.github.io/gym-tracker</code></li>
+      </ol>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:14px;font-weight:500;margin-bottom:10px">Cara pakai dari HP / laptop manapun (tanpa kehilangan data)</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.9">
+        <p style="margin-bottom:8px">Karena ini pure HTML, data tidak otomatis sync antar device. Alurnya simpel:</p>
+        <ol style="padding-left:18px;line-height:2.2">
+          <li>Buka tracker di device yang kamu pakai terakhir</li>
+          <li>Klik <strong>Export JSON</strong> → simpan file <code style="background:var(--bg3);padding:1px 6px;border-radius:4px">gym-data.json</code></li>
+          <li>Upload <code style="background:var(--bg3);padding:1px 6px;border-radius:4px">gym-data.json</code> ke repository GitHub (di folder yang sama dengan index.html)</li>
+          <li>Di device baru, buka tracker → klik <strong>Import JSON</strong> → pilih file tersebut</li>
+        </ol>
+        <p style="margin-top:10px;padding:10px 12px;background:var(--green-light);border-radius:var(--radius);color:var(--green)">
+          Tip: Simpan data JSON di Google Drive atau WhatsApp ke diri sendiri, lalu import di device manapun. Data tidak akan hilang selama file JSON-nya ada.
+        </p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-size:14px;font-weight:500;margin-bottom:8px">Bookmark URL-nya di HP</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.9">
+        Setelah GitHub Pages aktif, buka URL-nya di Chrome/Safari → tap menu browser → <strong>Add to Home Screen</strong>. Tracker akan muncul seperti app di home screen HP kamu, bisa dibuka kapan saja tanpa install apapun.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-bg" id="delete-modal">
+  <div class="modal">
+    <h3>Hapus sesi ini?</h3>
+    <p style="font-size:13px;color:var(--text2)">Data sesi ini akan dihapus permanen. Tidak bisa dikembalikan.</p>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeDeleteModal()">Batal</button>
+      <button class="btn btn-danger" onclick="confirmDelete()">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Data store (in-memory, export/import via JSON) ──
+let DB = { sessions: [], version: 1 };
+let deleteTarget = null;
+
+const EXERCISES = [
+  'Deadlift','Romanian Deadlift','Lat Pulldown','Cable Row','Dumbbell Row','Pull-Up',
+  'Straight-Arm Pulldown','Face Pull','Bench Press','Incline DB Press','Cable Fly',
+  'Pec Deck','Dips','Overhead Press','Lateral Raise','Rear Delt Fly','Arnold Press',
+  'Goblet Squat','Leg Press','Bulgarian Split Squat','Lunges','Hack Squat',
+  'Leg Extension','Leg Curl','Calf Raise','Barbell Curl','Dumbbell Curl',
+  'Hammer Curl','EZ-Bar Curl','Cable Curl','Tricep Pushdown','Overhead Extension',
+  'Skull Crusher','Cable Crunch','Hanging Knee Raise','Plank','Ab Wheel',
+  'Russian Twist','Leg Raise'
+];
+
+const MUSCLE_GROUPS = {
+  'Deadlift':'back','Romanian Deadlift':'back','Lat Pulldown':'back','Cable Row':'back',
+  'Dumbbell Row':'back','Pull-Up':'back','Straight-Arm Pulldown':'back','Face Pull':'back',
+  'Bench Press':'chest','Incline DB Press':'chest','Cable Fly':'chest','Pec Deck':'chest',
+  'Dips':'chest','Overhead Press':'shoulder','Lateral Raise':'shoulder',
+  'Rear Delt Fly':'shoulder','Arnold Press':'shoulder',
+  'Goblet Squat':'leg','Leg Press':'leg','Bulgarian Split Squat':'leg','Lunges':'leg',
+  'Hack Squat':'leg','Leg Extension':'leg','Leg Curl':'leg','Calf Raise':'leg',
+  'Barbell Curl':'arm','Dumbbell Curl':'arm','Hammer Curl':'arm','EZ-Bar Curl':'arm',
+  'Cable Curl':'arm','Tricep Pushdown':'arm','Overhead Extension':'arm',
+  'Skull Crusher':'arm','Cable Crunch':'abs','Hanging Knee Raise':'abs',
+  'Plank':'abs','Ab Wheel':'abs','Russian Twist':'abs','Leg Raise':'abs'
+};
+
+// ── Init ──
+window.onload = () => {
+  document.getElementById('f-date').value = today();
+  addExerciseRow();
+  renderAll();
+};
+
+function today() {
+  return new Date().toISOString().slice(0,10);
+}
+
+// ── Exercise rows ──
+function addExerciseRow(name='', sets='', reps='', weight='') {
+  const list = document.getElementById('exercises-list');
+  const id = Date.now() + Math.random();
+  const row = document.createElement('div');
+  row.className = 'form-row';
+  row.id = 'ex-'+id;
+  row.style.alignItems = 'flex-end';
+  row.innerHTML = `
+    <div class="field" style="flex:2;min-width:130px">
+      <label>Nama gerakan</label>
+      <input list="ex-list" value="${name}" placeholder="Pilih atau ketik...">
+    </div>
+    <div class="field" style="min-width:60px">
+      <label>Set</label>
+      <input type="number" value="${sets}" placeholder="4" min="1" max="20">
+    </div>
+    <div class="field" style="min-width:60px">
+      <label>Rep</label>
+      <input type="number" value="${reps}" placeholder="10" min="1" max="100">
+    </div>
+    <div class="field" style="min-width:70px">
+      <label>Beban (kg)</label>
+      <input type="number" value="${weight}" placeholder="0" min="0" step="0.5">
+    </div>
+    <div class="field" style="min-width:36px;width:36px">
+      <label style="opacity:0">.</label>
+      <button class="btn btn-sm btn-danger" onclick="document.getElementById('ex-${id}').remove()">✕</button>
+    </div>
+  `;
+  list.appendChild(row);
+
+  if (!document.getElementById('ex-list')) {
+    const dl = document.createElement('datalist');
+    dl.id = 'ex-list';
+    EXERCISES.forEach(e => { const o = document.createElement('option'); o.value = e; dl.appendChild(o); });
+    document.body.appendChild(dl);
+  }
+}
+
+function getExerciseRows() {
+  const rows = document.querySelectorAll('#exercises-list .form-row');
+  const result = [];
+  rows.forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    const name = inputs[0].value.trim();
+    if (!name) return;
+    result.push({
+      name,
+      sets: parseInt(inputs[1].value) || 0,
+      reps: parseInt(inputs[2].value) || 0,
+      weight: parseFloat(inputs[3].value) || 0
+    });
+  });
+  return result;
+}
+
+// ── Save session ──
+function saveSession() {
+  const date = document.getElementById('f-date').value;
+  const day = document.getElementById('f-day').value;
+  const duration = parseInt(document.getElementById('f-duration').value) || 0;
+  const energy = parseInt(document.getElementById('f-energy').value) || 0;
+  const notes = document.getElementById('f-notes').value.trim();
+  const exercises = getExerciseRows();
+
+  if (!date) { toast('Isi tanggal dulu!'); return; }
+  if (day !== 'Rest' && exercises.length === 0) { toast('Tambahkan minimal 1 gerakan!'); return; }
+
+  const session = { id: Date.now(), date, day, duration, energy, notes, exercises };
+  DB.sessions.push(session);
+  DB.sessions.sort((a,b) => b.date.localeCompare(a.date));
+
+  clearForm();
+  renderAll();
+  toast('Sesi disimpan!');
+  showSection('history', document.querySelectorAll('.tab')[1]);
+}
+
+function clearForm() {
+  document.getElementById('f-date').value = today();
+  document.getElementById('f-day').value = 'Day A - Back';
+  document.getElementById('f-duration').value = '';
+  document.getElementById('f-energy').value = '';
+  document.getElementById('f-notes').value = '';
+  document.getElementById('exercises-list').innerHTML = '';
+  addExerciseRow();
+}
+
+// ── Render history ──
+function renderHistory() {
+  const filter = document.getElementById('filter-day').value;
+  const container = document.getElementById('history-container');
+  let sessions = [...DB.sessions];
+  if (filter) sessions = sessions.filter(s => s.day === filter);
+
+  if (sessions.length === 0) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div>Belum ada sesi. Yuk catat latihan pertama!</div></div>`;
+    return;
+  }
+
+  container.innerHTML = sessions.map(s => {
+    const dayClass = s.day.includes('Back') ? 'back' : s.day.includes('Chest') ? 'chest' : s.day.includes('Shoulder') ? 'shoulder' : s.day.includes('Rest') ? 'abs' : 'arm';
+    const exRows = s.exercises.map(e => `
+      <tr>
+        <td>${e.name} <span class="badge badge-${MUSCLE_GROUPS[e.name] || 'arm'}" style="margin-left:4px">${MUSCLE_GROUPS[e.name] || '—'}</span></td>
+        <td>${e.sets} set</td>
+        <td>${e.reps} rep</td>
+        <td><strong>${e.weight} kg</strong></td>
+        <td style="color:var(--text3);font-size:12px">${e.sets && e.reps && e.weight ? 'Vol: ' + (e.sets*e.reps*e.weight).toFixed(0)+'kg' : '—'}</td>
+      </tr>
+    `).join('');
+
+    const energyStars = e => e ? '●'.repeat(Math.min(e,10)).padEnd(10,'○').slice(0,10).replace(/●/g,'<span style="color:var(--purple)">●</span>').replace(/○/g,'<span style="color:var(--border2)">○</span>') : '—';
+
+    return `
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <div>
+          <span class="badge badge-${dayClass}">${s.day}</span>
+          <span style="font-size:13px;font-weight:500;margin-left:8px">${formatDate(s.date)}</span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          ${s.duration ? `<span style="font-size:12px;color:var(--text3)">⏱ ${s.duration} mnt</span>` : ''}
+          ${s.energy ? `<span style="font-size:12px;color:var(--text3)">⚡ ${s.energy}/10</span>` : ''}
+          <button class="btn btn-sm btn-danger" onclick="openDeleteModal(${s.id})">Hapus</button>
+        </div>
+      </div>
+      ${s.exercises.length > 0 ? `
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Gerakan</th><th>Set</th><th>Rep</th><th>Beban</th><th>Volume</th></tr></thead>
+          <tbody>${exRows}</tbody>
+        </table>
+      </div>` : '<div style="font-size:13px;color:var(--text3);font-style:italic">Rest day</div>'}
+      ${s.notes ? `<div style="margin-top:10px;font-size:13px;color:var(--text2);border-top:0.5px solid var(--border);padding-top:10px">📝 ${s.notes}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── Render progress ──
+function renderProgress() {
+  const maxByEx = {};
+  const lastByEx = {};
+  const firstByEx = {};
+  const countByEx = {};
+
+  [...DB.sessions].reverse().forEach(s => {
+    s.exercises.forEach(e => {
+      if (!e.name || !e.weight) return;
+      const w = e.weight;
+      if (!maxByEx[e.name] || w > maxByEx[e.name]) maxByEx[e.name] = w;
+      lastByEx[e.name] = w;
+      if (!firstByEx[e.name]) firstByEx[e.name] = w;
+      countByEx[e.name] = (countByEx[e.name] || 0) + 1;
+    });
+  });
+
+  const entries = Object.entries(maxByEx).sort((a,b) => b[1]-a[1]);
+  const maxW = entries.length ? entries[0][1] : 1;
+
+  const progressStats = document.getElementById('progress-stats');
+  const progressBars = document.getElementById('progress-bars');
+
+  if (entries.length === 0) {
+    progressStats.innerHTML = '';
+    progressBars.innerHTML = `<div class="empty"><div class="empty-icon">📊</div><div>Belum ada data beban. Catat sesi dulu!</div></div>`;
+    return;
+  }
+
+  // Top 4 stat cards
+  const top4 = entries.slice(0,4);
+  progressStats.innerHTML = top4.map(([name, w]) => {
+    const diff = lastByEx[name] - firstByEx[name];
+    const diffStr = diff > 0 ? `<span class="up">+${diff}kg dari awal</span>` : diff < 0 ? `<span class="down">${diff}kg dari awal</span>` : `<span style="color:var(--text3)">Stabil</span>`;
+    return `<div class="stat-card">
+      <div class="stat-label">${name}</div>
+      <div class="stat-value">${w} kg</div>
+      <div class="stat-sub">${diffStr} · ${countByEx[name]} sesi</div>
+    </div>`;
+  }).join('');
+
+  // Bar chart
+  progressBars.innerHTML = `<div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:12px">Beban terberat per gerakan</div>` +
+    entries.map(([name, w]) => {
+      const pct = Math.round(w / maxW * 100);
+      const mg = MUSCLE_GROUPS[name] || 'arm';
+      const badgeClass = 'badge-'+mg;
+      return `<div class="chart-row">
+        <div class="chart-name">${name}</div>
+        <div style="display:flex;align-items:center;gap:8px;flex:1">
+          <span class="badge ${badgeClass}" style="width:60px;text-align:center;flex-shrink:0">${mg}</span>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${pct}%"></div></div>
+        </div>
+        <div class="chart-val">${w} kg</div>
+      </div>`;
+    }).join('');
+}
+
+// ── Render stats ──
+function renderStats() {
+  const total = DB.sessions.filter(s => s.day !== 'Rest').length;
+  const totalDays = DB.sessions.length;
+  const totalVol = DB.sessions.reduce((sum, s) => sum + s.exercises.reduce((ev, e) => ev + (e.sets*e.reps*e.weight||0), 0), 0);
+  const avgEnergy = DB.sessions.filter(s=>s.energy).length
+    ? (DB.sessions.filter(s=>s.energy).reduce((sum,s)=>sum+s.energy,0) / DB.sessions.filter(s=>s.energy).length).toFixed(1)
+    : '—';
+
+  document.getElementById('overall-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total sesi latihan</div><div class="stat-value">${total}</div><div class="stat-sub">${totalDays} entri total</div></div>
+    <div class="stat-card"><div class="stat-label">Total volume angkat</div><div class="stat-value">${totalVol >= 1000 ? (totalVol/1000).toFixed(1)+'t' : totalVol.toFixed(0)+'kg'}</div><div class="stat-sub">Sets × Reps × Beban</div></div>
+    <div class="stat-card"><div class="stat-label">Rata-rata energi</div><div class="stat-value">${avgEnergy}</div><div class="stat-sub">dari skala 1–10</div></div>
+    <div class="stat-card"><div class="stat-label">Streak minggu ini</div><div class="stat-value">${weeklyCount()}</div><div class="stat-sub">sesi 7 hari terakhir</div></div>
+  `;
+
+  // Frequency mini chart (last 8 sessions)
+  const last8 = DB.sessions.filter(s => s.day !== 'Rest').slice(0,8).reverse();
+  const freqChart = document.getElementById('freq-chart');
+  if (last8.length === 0) { freqChart.innerHTML = '<span style="font-size:12px;color:var(--text3)">Belum ada data</span>'; }
+  else {
+    const maxDur = Math.max(...last8.map(s=>s.duration||45), 1);
+    freqChart.innerHTML = last8.map(s => {
+      const h = Math.max(6, Math.round((s.duration||45) / maxDur * 46));
+      const dayShort = s.day.replace('Day ','').split(' ')[0];
+      return `<div class="bar-wrap"><div class="bar" style="height:${h}px;background:${s.day.includes('Back')?'#378ADD':s.day.includes('Chest')?'#D85A30':s.day.includes('Shoulder')?'#639922':'#7F77DD'}" title="${s.date}"></div><div class="bar-lbl">${dayShort}</div></div>`;
+    }).join('');
+  }
+
+  // PR list (estimated 1RM: weight × (1 + reps/30))
+  const prMap = {};
+  DB.sessions.forEach(s => {
+    s.exercises.forEach(e => {
+      if (!e.weight || !e.reps) return;
+      const est1rm = e.weight * (1 + e.reps/30);
+      if (!prMap[e.name] || est1rm > prMap[e.name]) prMap[e.name] = est1rm;
+    });
+  });
+  const prEntries = Object.entries(prMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  document.getElementById('pr-list').innerHTML = prEntries.length === 0
+    ? '<div style="font-size:13px;color:var(--text3)">Belum ada data</div>'
+    : prEntries.map(([name, est]) => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:0.5px solid var(--border);font-size:13px">
+        <span>${name}</span>
+        <span><strong>${est.toFixed(1)} kg</strong> <span style="font-size:11px;color:var(--text3)">est. 1RM</span></span>
+      </div>`).join('');
+}
+
+function weeklyCount() {
+  const now = new Date();
+  const weekAgo = new Date(now - 7*24*60*60*1000).toISOString().slice(0,10);
+  return DB.sessions.filter(s => s.day !== 'Rest' && s.date >= weekAgo).length;
+}
+
+// ── Export / Import ──
+function exportData() {
+  if (DB.sessions.length === 0) { toast('Belum ada data untuk di-export!'); return; }
+  const blob = new Blob([JSON.stringify(DB, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'gym-data.json';
+  a.click();
+  toast('Data di-export!');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.sessions) throw new Error('Format tidak valid');
+      DB = data;
+      renderAll();
+      toast(`Import berhasil! ${DB.sessions.length} sesi dimuat.`);
+    } catch(err) { toast('File JSON tidak valid!'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ── Delete ──
+function openDeleteModal(id) { deleteTarget = id; document.getElementById('delete-modal').classList.add('open'); }
+function closeDeleteModal() { deleteTarget = null; document.getElementById('delete-modal').classList.remove('open'); }
+function confirmDelete() {
+  DB.sessions = DB.sessions.filter(s => s.id !== deleteTarget);
+  closeDeleteModal();
+  renderAll();
+  toast('Sesi dihapus');
+}
+
+// ── UI helpers ──
+function showSection(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  renderAll();
+}
+
+function renderAll() {
+  renderHistory();
+  renderProgress();
+  renderStats();
+}
+
+function formatDate(d) {
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('id-ID', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
